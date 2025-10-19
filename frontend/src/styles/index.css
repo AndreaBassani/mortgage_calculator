@@ -83,12 +83,19 @@ body {
   grid-template-columns: 1fr 1fr;
   gap: 1.5rem;
   margin-bottom: 1.5rem;
+  align-items: start;
 }
 
 @media (max-width: 1024px) {
   .calculator-grid {
     grid-template-columns: 1fr;
   }
+}
+
+.calculator-grid > form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
 .card {
@@ -123,27 +130,6 @@ body {
   height: 1.25rem;
   background: var(--accent-primary);
   border-radius: 2px;
-}
-
-.form-section {
-  margin-bottom: 2rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid var(--border-light);
-}
-
-.form-section:last-of-type {
-  border-bottom: none;
-  margin-bottom: 0;
-  padding-bottom: 0;
-}
-
-.section-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--accent-secondary);
-  margin-bottom: 1.25rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
 .form-group {

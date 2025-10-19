@@ -14,7 +14,7 @@ function OneOffOverpaymentManager({ mortgageTerm, onOverpaymentsUpdate }) {
     const amount = parseFloat(amountInput)
     const year = parseInt(yearInput)
 
-    if (amount && year && !isNaN(amount) && !isNaN(year) && amount > 0) {
+    if (amount && !isNaN(amount) && !isNaN(year) && amount > 0 && year >= 0) {
       setOverpayments(prev => ({
         ...prev,
         [year]: (prev[year] || 0) + amount
@@ -65,6 +65,21 @@ function OneOffOverpaymentManager({ mortgageTerm, onOverpaymentsUpdate }) {
           <div className="rate-change-item">
             <div className="form-group" style={{ marginBottom: 0 }}>
               <div className="input-group">
+                <input
+                  type="number"
+                  placeholder="Year"
+                  className="form-input"
+                  min="0"
+                  max={mortgageTerm}
+                  step="1"
+                  value={yearInput}
+                  onChange={(e) => setYearInput(e.target.value)}
+                />
+                <span className="input-suffix">year</span>
+              </div>
+            </div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <div className="input-group">
                 <span className="input-prefix">£</span>
                 <input
                   type="number"
@@ -75,21 +90,6 @@ function OneOffOverpaymentManager({ mortgageTerm, onOverpaymentsUpdate }) {
                   value={amountInput}
                   onChange={(e) => setAmountInput(e.target.value)}
                 />
-              </div>
-            </div>
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <div className="input-group">
-                <input
-                  type="number"
-                  placeholder="Year"
-                  className="form-input"
-                  min="1"
-                  max={mortgageTerm}
-                  step="1"
-                  value={yearInput}
-                  onChange={(e) => setYearInput(e.target.value)}
-                />
-                <span className="input-suffix">year</span>
               </div>
             </div>
             <button

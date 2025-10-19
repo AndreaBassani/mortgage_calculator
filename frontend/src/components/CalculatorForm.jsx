@@ -111,13 +111,10 @@ function CalculatorForm({ onCalculate, loading }) {
   }
 
   return (
-    <div className="card">
-      <h2 className="card-title">Mortgage Calculator</h2>
-
-      <form onSubmit={handleSubmit}>
-        {/* MORTGAGE DETAILS SECTION */}
-        <div className="form-section">
-          <h3 className="section-title">Mortgage Details</h3>
+    <form onSubmit={handleSubmit}>
+      {/* MORTGAGE DETAILS SECTION */}
+      <div className="card">
+        <h2 className="card-title">Mortgage Details</h2>
         <div className="form-group">
           <label className="form-label">Property Value</label>
           <div className="input-group">
@@ -259,11 +256,36 @@ function CalculatorForm({ onCalculate, loading }) {
           </div>
           <p className="note">Your rate will change after this period</p>
         </div>
-        </div>
+      </div>
 
-        {/* OVERPAYMENTS SECTION */}
-        <div className="form-section">
-          <h3 className="section-title">Overpayments</h3>
+      {/* OVERPAYMENTS SECTION */}
+      <div className="card">
+        <h2 className="card-title">
+          Overpayments
+          <button
+            type="button"
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--accent-primary)',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+              padding: '0',
+              width: '18px',
+              height: '18px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '50%',
+              border: '2px solid var(--accent-primary)',
+              marginLeft: '0.5rem'
+            }}
+            onClick={() => alert('How Overpayment Timing Works:\n\nOne-off overpayments are applied at the END of the selected year, after all 12 monthly payments for that year have been made.\n\n• Year 0: Overpayment applied after month 12 (end of first year)\n• Year 1: Overpayment applied after month 24 (end of second year)\n• The table on the right shows your mortgage balance at the BEGINNING of each year\n\nExample: A £10,000 overpayment in Year 0 will be applied after month 12. You\'ll see the reduced balance at the start of Year 1 in the results table.')}
+            title="Learn how overpayment timing works"
+          >
+            ?
+          </button>
+        </h2>
 
         <OneOffOverpaymentManager
           mortgageTerm={formData.mortgage_term}
@@ -300,29 +322,53 @@ function CalculatorForm({ onCalculate, loading }) {
             </select>
           </div>
         </div>
-        </div>
+      </div>
 
-        {/* LTV-BASED RATE CHANGES SECTION */}
-        <div className="form-section">
-          <h3 className="section-title">LTV-Based Rate Changes</h3>
+      {/* LTV-BASED RATE CHANGES SECTION */}
+      <div className="card">
+        <h2 className="card-title">
+          LTV-Based Rate Changes
+          <button
+            type="button"
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--accent-primary)',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+              padding: '0',
+              width: '18px',
+              height: '18px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '50%',
+              border: '2px solid var(--accent-primary)',
+              marginLeft: '0.5rem'
+            }}
+            onClick={() => alert('LTV-Based Rate Changes:\n\nSet new interest rates that apply when your LTV drops to specific levels.\n\nHow it works:\n1. LTV is checked at the start of each year (beginning of year)\n2. When your LTV reaches or drops below a threshold (e.g., 85%), it\'s marked as reached\n3. Rate application depends on when the threshold is reached:\n   • If reached at a fixed-rate period start (Year 0, 2, 4, etc.): New rate applies IMMEDIATELY\n   • If reached mid-period (Year 1, 3, 5, etc.): New rate applies at the NEXT period start\n\nExample with 2-year fixed rate:\n- Initial: 4.81% rate, 2-year fix\n- You set: 85% LTV → 4.5%\n\nScenario A (Reached at period start):\n- LTV drops to 84% at start of Year 2\n- Year 2+: 4.5% rate applies immediately\n\nScenario B (Reached mid-period):\n- LTV drops to 84% at start of Year 3\n- Year 3: Still 4.81% (mid-period)\n- Year 4+: 4.5% rate applies (next period start)')}
+            title="Learn how LTV-based rate changes work"
+          >
+            ?
+          </button>
+        </h2>
 
         <InterestRateManager
           initialRate={formData.interest_rate}
           mortgageTerm={formData.mortgage_term}
           onRateChangesUpdate={handleRateChanges}
         />
-        </div>
+      </div>
 
-        <button
-          type="submit"
-          className="button"
-          disabled={loading}
-          style={{ width: '100%', marginTop: '1rem' }}
-        >
-          {loading ? 'Calculating...' : 'Calculate'}
-        </button>
-      </form>
-    </div>
+      <button
+        type="submit"
+        className="button"
+        disabled={loading}
+        style={{ width: '100%', marginTop: '0' }}
+      >
+        {loading ? 'Calculating...' : 'Calculate'}
+      </button>
+    </form>
   )
 }
 

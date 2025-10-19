@@ -80,14 +80,15 @@ def calculate_baseline_schedule(
     balance = initial_balance
     baseline_schedule = []
     current_rate = initial_rate
-    current_year = 0
 
     # Setup fixed rate periods
     best_ltv_rate = None
-    fixed_rate_end_years = []
+    pending_rate = None
+
+    fixed_rate_period_starts = [0]
     year_counter = product_type
     while year_counter < (total_months // 12):
-        fixed_rate_end_years.append(year_counter)
+        fixed_rate_period_starts.append(year_counter)
         year_counter += product_type
 
     for month in range(total_months):
@@ -101,18 +102,29 @@ def calculate_baseline_schedule(
 
         year = month // 12
 
-        # Calculate LTV and track best rate
-        current_ltv = (balance / property_value * 100) if property_value > 0 else 100
-        for ltv_threshold in sorted(rate_changes.keys(), reverse=True):
-            if current_ltv <= ltv_threshold:
-                if best_ltv_rate is None or rate_changes[ltv_threshold] < best_ltv_rate:
-                    best_ltv_rate = rate_changes[ltv_threshold]
+        # At the start of each year (first month), check LTV and potentially apply rate changes
+        if month % 12 == 0:  # First month of the year
+            # Calculate LTV at the start of the year
+            current_ltv = (balance / property_value * 100) if property_value > 0 else 100
 
-        # Apply rate at end of fixed periods
-        if year != current_year:
-            current_year = year
-            if year in fixed_rate_end_years and best_ltv_rate is not None:
-                current_rate = best_ltv_rate
+            # Find the best rate for current LTV
+            current_best_rate = None
+            for ltv_threshold in sorted(rate_changes.keys(), reverse=True):
+                if current_ltv <= ltv_threshold:
+                    if current_best_rate is None or rate_changes[ltv_threshold] < current_best_rate:
+                        current_best_rate = rate_changes[ltv_threshold]
+
+            # Track the best rate ever achieved
+            if current_best_rate is not None:
+                if best_ltv_rate is None or current_best_rate < best_ltv_rate:
+                    best_ltv_rate = current_best_rate
+                    pending_rate = current_best_rate
+
+            # Apply rate changes at fixed period starts
+            if year in fixed_rate_period_starts and pending_rate is not None:
+                if pending_rate < current_rate:  # Only apply if it's better
+                    current_rate = pending_rate
+                    pending_rate = None  # Rate has been applied
 
         monthly_rate = current_rate / 100 / 12
         interest_payment = balance * monthly_rate
@@ -159,40 +171,55 @@ def calculate_mortgage(params: MortgageParams) -> Dict[str, Any]:
     total_interest_paid = 0.0
     total_principal_paid = 0.0
     month = 0
-    current_year = 0
+    current_year = -1  # Start at -1 so Year 0 triggers the check
 
     # Track the best LTV-based rate achieved
     best_ltv_rate = None
-    ltv_rate_reached_at_month = None
+    ltv_threshold_reached = None
+    ltv_rate_reached_at_year = None
+    rate_applied_at_year = None
+    pending_rate = None  # Rate that's been reached but waiting for period start
 
     # Fixed rate periods (years when new rates can be applied)
-    fixed_rate_end_years = []
-    current_fixed_period = params.product_type
+    fixed_rate_period_starts = [0]  # Year 0 is always a period start
     year_counter = params.product_type
     while year_counter < params.mortgage_term:
-        fixed_rate_end_years.append(year_counter)
+        fixed_rate_period_starts.append(year_counter)
         year_counter += params.product_type
 
     while balance > 0.01 and month < total_months:
         year = month // 12
 
-        # Calculate current LTV
-        current_ltv = (balance / params.property_value * 100) if params.property_value > 0 else 100
+        # At the start of each year (first month), check LTV and potentially apply rate changes
+        if month % 12 == 0:  # First month of the year
+            # Calculate current LTV at the start of the year
+            current_ltv = (balance / params.property_value * 100) if params.property_value > 0 else 100
 
-        # Check if we've reached any LTV threshold and track the best rate
-        for ltv_threshold in sorted(params.interest_rate_changes.keys(), reverse=True):
-            if current_ltv <= ltv_threshold:
-                if best_ltv_rate is None or params.interest_rate_changes[ltv_threshold] < best_ltv_rate:
-                    best_ltv_rate = params.interest_rate_changes[ltv_threshold]
-                    if ltv_rate_reached_at_month is None:
-                        ltv_rate_reached_at_month = month
+            # Find the best rate for current LTV
+            current_best_rate = None
+            current_best_threshold = None
+            for ltv_threshold in sorted(params.interest_rate_changes.keys(), reverse=True):
+                if current_ltv <= ltv_threshold:
+                    if current_best_rate is None or params.interest_rate_changes[ltv_threshold] < current_best_rate:
+                        current_best_rate = params.interest_rate_changes[ltv_threshold]
+                        current_best_threshold = ltv_threshold
 
-        # Apply rate changes at the end of fixed rate periods
-        if year != current_year:
-            current_year = year
-            # Check if this is the end of a fixed rate period
-            if year in fixed_rate_end_years and best_ltv_rate is not None:
-                current_rate = best_ltv_rate
+            # Track the best rate ever achieved and when it was first reached
+            if current_best_rate is not None:
+                if best_ltv_rate is None or current_best_rate < best_ltv_rate:
+                    best_ltv_rate = current_best_rate
+                    if ltv_rate_reached_at_year is None:
+                        ltv_rate_reached_at_year = year
+                        ltv_threshold_reached = current_best_threshold
+                    pending_rate = current_best_rate
+
+            # Apply rate changes at fixed period starts
+            if year in fixed_rate_period_starts and pending_rate is not None:
+                if pending_rate < current_rate:  # Only apply if it's better
+                    current_rate = pending_rate
+                    if rate_applied_at_year is None:
+                        rate_applied_at_year = year
+                    pending_rate = None  # Rate has been applied
 
         monthly_rate = current_rate / 100 / 12
         interest_payment = balance * monthly_rate
@@ -204,8 +231,8 @@ def calculate_mortgage(params: MortgageParams) -> Dict[str, Any]:
 
         overpayment = 0.0
 
-        # Check if there's a one-off overpayment scheduled for this year (apply in first month of year)
-        if year in params.one_off_overpayments and month % 12 == 0:
+        # Check if there's a one-off overpayment scheduled for this year (apply at end of year, last month)
+        if year in params.one_off_overpayments and month % 12 == 11:
             overpayment += params.one_off_overpayments[year]
 
         if params.recurring_overpayment > 0:
@@ -250,6 +277,8 @@ def calculate_mortgage(params: MortgageParams) -> Dict[str, Any]:
         "years_saved": years_saved,
         "months_saved_remainder": months_remainder,
         "final_balance": balance,
+        "initial_mortgage_debt": params.mortgage_debt,
+        "product_type": params.product_type,
         "schedule": schedule,
         "baseline_schedule": baseline_schedule,
         "overpayment_summary": {
@@ -259,5 +288,11 @@ def calculate_mortgage(params: MortgageParams) -> Dict[str, Any]:
                 params.recurring_overpayment
                 * (month if params.recurring_frequency == "monthly" else month // 12)
             )
+        },
+        "ltv_milestone_info": {
+            "threshold_reached": ltv_threshold_reached,
+            "reached_at_year": ltv_rate_reached_at_year,
+            "rate_applied_at_year": rate_applied_at_year,
+            "new_rate": best_ltv_rate
         }
     }

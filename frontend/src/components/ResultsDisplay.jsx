@@ -1,4 +1,4 @@
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts'
+import { ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { formatCurrency, formatYearMonth } from '../utils/formatters'
 
 function ResultsDisplay({ results, loading, error }) {
@@ -35,22 +35,47 @@ function ResultsDisplay({ results, loading, error }) {
 
   // Find where baseline ends (last non-zero balance)
   const baselineEndIndex = results.baseline_schedule.findIndex(item => item.balance <= 0.01)
-  const maxMonths = baselineEndIndex > 0 ? baselineEndIndex : results.baseline_schedule.length
+  const baselineEndMonth = baselineEndIndex > 0 ? baselineEndIndex : results.baseline_schedule.length
+  const baselineEndYear = Math.floor(baselineEndMonth / 12)
 
-  // Combine schedule and baseline for chart, only up to where baseline ends
-  const chartData = results.baseline_schedule
-    .slice(0, maxMonths)
-    .filter((_, index) => index % 3 === 0)
-    .map((baselineItem, idx) => {
-      const scheduleItem = results.schedule[idx * 3]
-      return {
-        year: baselineItem.year,
-        month: baselineItem.month,
-        withOverpayment: scheduleItem ? Math.round(scheduleItem.balance) : 0,
-        withoutOverpayment: Math.round(baselineItem.balance),
-        rate: scheduleItem?.rate
-      }
-    })
+  // Extend chart to one year after baseline ends
+  const maxMonths = Math.min((baselineEndYear + 1) * 12, results.baseline_schedule.length)
+
+  // Get product type for x-axis tick alignment (default to 2 if not available)
+  const productType = results.product_type || 2
+
+  // Combine schedule and baseline for chart
+  // Create data showing beginning-of-year balances
+  const chartData = []
+
+  // Year 0: Initial mortgage debt (before any payments)
+  const initialDebt = results.initial_mortgage_debt || 0
+  chartData.push({
+    year: 0,
+    month: 0,
+    withOverpayment: Math.round(initialDebt),
+    withoutOverpayment: Math.round(initialDebt),
+    rate: results.schedule[0]?.rate
+  })
+
+  // For subsequent years, show balance at start of year (after previous year's payments)
+  for (let yearIndex = 1; yearIndex <= Math.floor(maxMonths / 12); yearIndex++) {
+    const balanceMonthIndex = yearIndex * 12 - 1 // Last month of previous year (for balance)
+    const rateMonthIndex = yearIndex * 12 // First month of current year (for rate)
+    const baselineItem = results.baseline_schedule[balanceMonthIndex]
+    const scheduleItemForBalance = results.schedule[balanceMonthIndex]
+    const scheduleItemForRate = results.schedule[rateMonthIndex]
+
+    if (scheduleItemForBalance || baselineItem) {
+      chartData.push({
+        year: yearIndex,
+        month: yearIndex * 12,
+        withOverpayment: Math.round(scheduleItemForBalance?.balance || 0),
+        withoutOverpayment: Math.round(baselineItem?.balance || 0),
+        rate: scheduleItemForRate?.rate || scheduleItemForBalance?.rate
+      })
+    }
+  }
 
   const propertyValue = results.property_value || 0
   const maxBalance = Math.max(
@@ -91,7 +116,7 @@ function ResultsDisplay({ results, loading, error }) {
           <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
             Interest Rate Changes Applied:
           </h4>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.75rem' }}>
             {rateChanges.map((change, index) => (
               <span key={index} style={{
                 background: 'var(--bg-secondary)',
@@ -104,6 +129,9 @@ function ResultsDisplay({ results, loading, error }) {
                 Year {change.year}: <strong style={{ color: 'var(--accent-primary)' }}>{change.rate}%</strong>
               </span>
             ))}
+          </div>
+          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+            Note: LTV-based rate changes are applied at the start of fixed-rate periods. If an LTV milestone is reached at the beginning of a period (e.g., Year 2, 4, 6 for a 2-year fix), the new rate applies immediately. If reached mid-period, it applies at the next period start.
           </div>
         </div>
       )}
@@ -143,14 +171,32 @@ function ResultsDisplay({ results, loading, error }) {
         <h3 style={{ marginBottom: '1.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           Your Mortgage Debt Over Time
         </h3>
-        <ResponsiveContainer width="100%" height={400}>
-          <LineChart data={chartData}>
+        <ResponsiveContainer width="100%" height={350}>
+          <ComposedChart data={chartData} margin={{ bottom: 20 }}>
+            <defs>
+              <linearGradient id="colorWithout" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#b09a96" stopOpacity={0.3}/>
+                <stop offset="95%" stopColor="#b09a96" stopOpacity={0.05}/>
+              </linearGradient>
+              <linearGradient id="colorWith" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#d4a59a" stopOpacity={0.4}/>
+                <stop offset="95%" stopColor="#d4a59a" stopOpacity={0.08}/>
+              </linearGradient>
+            </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#f0d9cc" opacity={0.6} />
             <XAxis
               dataKey="year"
               stroke="var(--text-secondary)"
               tick={{ fill: 'var(--text-secondary)' }}
-              label={{ value: 'Years', position: 'insideBottom', offset: -5, fill: 'var(--text-secondary)' }}
+              label={{ value: 'Years', position: 'insideBottom', offset: -10, fill: 'var(--text-secondary)' }}
+              ticks={(() => {
+                const maxYear = Math.max(...chartData.map(d => d.year))
+                const ticks = []
+                for (let i = 0; i <= maxYear; i += productType) {
+                  ticks.push(i)
+                }
+                return ticks
+              })()}
             />
             <YAxis
               stroke="var(--text-secondary)"
@@ -172,31 +218,31 @@ function ResultsDisplay({ results, loading, error }) {
               labelFormatter={(label) => `Year ${label}`}
             />
             <Legend
-              wrapperStyle={{ color: 'var(--text-secondary)' }}
+              wrapperStyle={{ color: 'var(--text-secondary)', paddingTop: '15px' }}
               iconType="line"
             />
 
-            {/* Without Overpayments Line */}
-            <Line
+            {/* Without Overpayments Area */}
+            <Area
               type="monotone"
               dataKey="withoutOverpayment"
               stroke="#b09a96"
               strokeWidth={2}
-              dot={false}
-              name="Without Overpayments"
+              fill="url(#colorWithout)"
               strokeDasharray="5 5"
+              name="Without Overpayments"
             />
 
-            {/* With Overpayments Line */}
-            <Line
+            {/* With Overpayments Area */}
+            <Area
               type="monotone"
               dataKey="withOverpayment"
               stroke="#d4a59a"
               strokeWidth={3}
-              dot={false}
+              fill="url(#colorWith)"
               name="With Overpayments"
             />
-          </LineChart>
+          </ComposedChart>
         </ResponsiveContainer>
 
         {/* LTV Table by Year */}
@@ -212,12 +258,14 @@ function ResultsDisplay({ results, loading, error }) {
               color: 'var(--text-secondary)',
               fontSize: '0.85rem',
               marginBottom: '1rem',
-              fontWeight: 600,
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
+              fontWeight: 600
             }}>
-              <span>LTV Progress by Year (Property Value: {formatCurrency(propertyValue)})</span>
+              <div style={{ marginBottom: '0.5rem' }}>
+                LTV Progress by Year (Property Value: {formatCurrency(propertyValue)})
+              </div>
+              <div style={{ fontSize: '0.75rem', fontWeight: 400, fontStyle: 'italic', color: 'var(--text-muted)' }}>
+                Table shows balance and LTV at the start of each year. When an LTV milestone is reached, the associated rate is applied at the beginning of the next fixed-rate period (or immediately if reached at a period start).
+              </div>
             </div>
 
             <div style={{ overflowX: 'auto' }}>
@@ -225,9 +273,10 @@ function ResultsDisplay({ results, loading, error }) {
                 <thead>
                   <tr>
                     <th>Year</th>
-                    <th>Capital (With Overpayment)</th>
+                    <th>Capital at Year Start</th>
                     <th>LTV</th>
-                    <th>Milestone</th>
+                    <th>Interest Rate</th>
+                    <th>LTV Milestone Reached</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -238,7 +287,7 @@ function ResultsDisplay({ results, loading, error }) {
                     if (!chartData || chartData.length === 0) {
                       return (
                         <tr>
-                          <td colSpan="4" style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                          <td colSpan="5" style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                             No data available
                           </td>
                         </tr>
@@ -261,7 +310,7 @@ function ResultsDisplay({ results, loading, error }) {
                         if (previousLTV !== null) {
                           // Find if we crossed any threshold between previous year and this year
                           milestone = importantLTVs.find(threshold =>
-                            previousLTV >= threshold && ltvNum < threshold
+                            previousLTV > threshold && ltvNum <= threshold
                           )
                         }
 
@@ -269,6 +318,7 @@ function ResultsDisplay({ results, loading, error }) {
                           year,
                           capital: yearData.withOverpayment,
                           ltv: ltvNum,
+                          rate: yearData.rate,
                           milestone
                         })
 
@@ -286,6 +336,7 @@ function ResultsDisplay({ results, loading, error }) {
                           <td>{data.year}</td>
                           <td>{formatCurrency(data.capital)}</td>
                           <td>{data.ltv}%</td>
+                          <td>{data.rate ? `${data.rate}%` : '-'}</td>
                           <td>
                             {isImportant ? (
                               <span className="milestone-badge">{data.milestone}% LTV</span>

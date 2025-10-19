@@ -49,32 +49,8 @@ function InterestRateManager({ initialRate, mortgageTerm, onRateChangesUpdate })
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <button
-              type="button"
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--accent-primary)',
-                cursor: 'pointer',
-                fontSize: '1rem',
-                padding: '0',
-                width: '20px',
-                height: '20px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: '50%',
-                border: '2px solid var(--accent-primary)'
-              }}
-              onClick={() => alert('LTV-Based Rate Changes:\n\nSet new interest rates that apply when your LTV drops to specific levels.\n\nHow it works:\n1. When your LTV reaches or drops below a threshold (e.g., 85%), it\'s marked\n2. The new rate is NOT applied immediately\n3. It waits until your current fixed rate period ends\n4. Then the new rate for that LTV band is applied\n\nExample:\n- 2-year fix at 4.81%\n- You set: 85% LTV → 4.5%\n- LTV drops to 84.5% in year 1\n- Rate stays 4.81% until end of year 2\n- From year 3 onwards: 4.5% rate is applied')}
-              title="Learn how LTV-based rate changes work"
-            >
-              ?
-            </button>
-          </div>
           {sortedRateChanges.length > 0 && (
-            <p className="note" style={{ marginTop: '0.25rem', marginBottom: 0 }}>
+            <p className="note" style={{ marginBottom: 0 }}>
               {sortedRateChanges.length} rate change{sortedRateChanges.length !== 1 ? 's' : ''} configured
             </p>
           )}
@@ -135,8 +111,11 @@ function InterestRateManager({ initialRate, mortgageTerm, onRateChangesUpdate })
       )}
 
       <div>
-        <p className="note" style={{ marginBottom: '1rem' }}>
-          Initial rate: {initialRate}% (applied until fixed period ends or LTV threshold reached)
+        <p className="note" style={{ marginBottom: '0.5rem' }}>
+          Initial rate: {initialRate}% (applied until a lower LTV-based rate becomes available)
+        </p>
+        <p className="note" style={{ marginBottom: '1rem', fontSize: '0.85rem', fontStyle: 'italic', color: 'var(--text-muted)' }}>
+          LTV-based rates are applied when remortgaging at fixed-rate period starts. If you reach an LTV threshold at the start of a period, the new rate applies immediately. If reached mid-period, it applies at the next period start.
         </p>
         {sortedRateChanges.length > 0 ? (
           <div style={{
