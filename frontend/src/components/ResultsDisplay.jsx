@@ -269,14 +269,51 @@ function ResultsDisplay({ results, loading, error }) {
             </div>
 
             <div style={{ overflowX: 'auto' }}>
-              <table className="ltv-table">
+              <table className="ltv-table" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
                 <thead>
-                  <tr>
-                    <th>Year</th>
-                    <th>Capital at Year Start</th>
-                    <th>LTV</th>
-                    <th>Interest Rate</th>
-                    <th>LTV Milestone Reached</th>
+                  <tr style={{
+                    background: 'linear-gradient(135deg, var(--accent-primary) 0%, #c9998e 100%)',
+                    color: 'white'
+                  }}>
+                    <th style={{
+                      padding: '0.875rem 1rem',
+                      fontWeight: '600',
+                      fontSize: '0.875rem',
+                      letterSpacing: '0.025em',
+                      textAlign: 'left',
+                      borderRight: '1px solid rgba(255, 255, 255, 0.2)'
+                    }}>Year</th>
+                    <th style={{
+                      padding: '0.875rem 1rem',
+                      fontWeight: '600',
+                      fontSize: '0.875rem',
+                      letterSpacing: '0.025em',
+                      textAlign: 'left',
+                      borderRight: '1px solid rgba(255, 255, 255, 0.2)'
+                    }}>Capital at Year Start</th>
+                    <th style={{
+                      padding: '0.875rem 1rem',
+                      fontWeight: '600',
+                      fontSize: '0.875rem',
+                      letterSpacing: '0.025em',
+                      textAlign: 'left',
+                      borderRight: '1px solid rgba(255, 255, 255, 0.2)'
+                    }}>LTV</th>
+                    <th style={{
+                      padding: '0.875rem 1rem',
+                      fontWeight: '600',
+                      fontSize: '0.875rem',
+                      letterSpacing: '0.025em',
+                      textAlign: 'left',
+                      borderRight: '1px solid rgba(255, 255, 255, 0.2)'
+                    }}>Interest Rate</th>
+                    <th style={{
+                      padding: '0.875rem 1rem',
+                      fontWeight: '600',
+                      fontSize: '0.875rem',
+                      letterSpacing: '0.025em',
+                      textAlign: 'left'
+                    }}>LTV Milestone Reached</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -326,18 +363,49 @@ function ResultsDisplay({ results, loading, error }) {
                       }
                     }
 
-                    return yearlyData.map(data => {
+                    return yearlyData.map((data, index) => {
                       const isImportant = data.milestone !== undefined
+                      const periodNumber = Math.floor(data.year / productType)
+                      const isEvenPeriod = periodNumber % 2 === 0
+                      const bgColor = isEvenPeriod ? '#ffffff' : '#faf6f5'
+
                       return (
                         <tr
                           key={data.year}
                           className={isImportant ? 'highlight' : ''}
+                          style={{
+                            backgroundColor: bgColor,
+                            transition: 'background-color 0.2s ease'
+                          }}
                         >
-                          <td>{data.year}</td>
-                          <td>{formatCurrency(data.capital)}</td>
-                          <td>{data.ltv}%</td>
-                          <td>{data.rate ? `${data.rate}%` : '-'}</td>
-                          <td>
+                          <td style={{
+                            padding: '0.75rem 1rem',
+                            borderBottom: '1px solid var(--border-color)'
+                          }}>
+                            {data.year}
+                          </td>
+                          <td style={{
+                            padding: '0.75rem 1rem',
+                            borderBottom: '1px solid var(--border-color)'
+                          }}>
+                            {formatCurrency(data.capital)}
+                          </td>
+                          <td style={{
+                            padding: '0.75rem 1rem',
+                            borderBottom: '1px solid var(--border-color)'
+                          }}>
+                            {data.ltv}%
+                          </td>
+                          <td style={{
+                            padding: '0.75rem 1rem',
+                            borderBottom: '1px solid var(--border-color)'
+                          }}>
+                            {data.rate ? `${data.rate}%` : '-'}
+                          </td>
+                          <td style={{
+                            padding: '0.75rem 1rem',
+                            borderBottom: '1px solid var(--border-color)'
+                          }}>
                             {isImportant ? (
                               <span className="milestone-badge">{data.milestone}% LTV</span>
                             ) : (
