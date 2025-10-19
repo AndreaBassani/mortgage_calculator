@@ -9,35 +9,35 @@ function InterestRateManager({ initialRate, mortgageTerm, onRateChangesUpdate })
     onRateChangesUpdate(rateChanges)
   }, [rateChanges])
 
-  const addRateChange = (year, rate) => {
-    if (year && rate && year > 0 && year <= mortgageTerm) {
+  const addRateChange = (ltv, rate) => {
+    if (ltv && rate && ltv > 0 && ltv <= 100) {
       const newChanges = {
         ...rateChanges,
-        [year]: parseFloat(rate)
+        [ltv]: parseFloat(rate)
       }
-      console.log('Adding rate change:', { year, rate, newChanges })
+      console.log('Adding rate change:', { ltv, rate, newChanges })
       setRateChanges(newChanges)
     }
   }
 
-  const removeRateChange = (year) => {
+  const removeRateChange = (ltv) => {
     setRateChanges(prev => {
       const updated = { ...prev }
-      delete updated[year]
+      delete updated[ltv]
       return updated
     })
   }
 
-  const [yearInput, setYearInput] = useState('')
+  const [ltvInput, setLtvInput] = useState('')
   const [rateInput, setRateInput] = useState('')
 
   const handleAddClick = () => {
-    const year = parseInt(yearInput)
+    const ltv = parseFloat(ltvInput)
     const rate = parseFloat(rateInput)
 
-    if (year && rate && !isNaN(year) && !isNaN(rate)) {
-      addRateChange(year, rate)
-      setYearInput('')
+    if (ltv && rate && !isNaN(ltv) && !isNaN(rate)) {
+      addRateChange(ltv, rate)
+      setLtvInput('')
       setRateInput('')
     }
   }
@@ -48,10 +48,34 @@ function InterestRateManager({ initialRate, mortgageTerm, onRateChangesUpdate })
   return (
     <div className="rate-changes-section">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <div>
-          <label className="form-label" style={{ marginBottom: 0 }}>
-            Interest Rate Changes
-          </label>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <label className="form-label" style={{ marginBottom: 0 }}>
+              LTV-Based Rate Changes
+            </label>
+            <button
+              type="button"
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--accent-primary)',
+                cursor: 'pointer',
+                fontSize: '1rem',
+                padding: '0',
+                width: '20px',
+                height: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '50%',
+                border: '2px solid var(--accent-primary)'
+              }}
+              onClick={() => alert('LTV-Based Rate Changes:\n\nSet new interest rates that apply when your LTV drops to specific levels.\n\nHow it works:\n1. When your LTV reaches or drops below a threshold (e.g., 85%), it\'s marked\n2. The new rate is NOT applied immediately\n3. It waits until your current fixed rate period ends\n4. Then the new rate for that LTV band is applied\n\nExample:\n- 2-year fix at 4.81%\n- You set: 85% LTV → 4.5%\n- LTV drops to 84.5% in year 1\n- Rate stays 4.81% until end of year 2\n- From year 3 onwards: 4.5% rate is applied')}
+              title="Learn how LTV-based rate changes work"
+            >
+              ?
+            </button>
+          </div>
           {sortedRateChanges.length > 0 && (
             <p className="note" style={{ marginTop: '0.25rem', marginBottom: 0 }}>
               {sortedRateChanges.length} rate change{sortedRateChanges.length !== 1 ? 's' : ''} configured
@@ -75,14 +99,15 @@ function InterestRateManager({ initialRate, mortgageTerm, onRateChangesUpdate })
               <div className="input-group">
                 <input
                   type="number"
-                  placeholder="Year"
+                  placeholder="LTV %"
                   className="form-input"
                   min="1"
-                  max={mortgageTerm}
-                  step="1"
-                  value={yearInput}
-                  onChange={(e) => setYearInput(e.target.value)}
+                  max="100"
+                  step="0.1"
+                  value={ltvInput}
+                  onChange={(e) => setLtvInput(e.target.value)}
                 />
+                <span className="input-suffix">%</span>
               </div>
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
@@ -114,7 +139,7 @@ function InterestRateManager({ initialRate, mortgageTerm, onRateChangesUpdate })
 
       <div>
         <p className="note" style={{ marginBottom: '1rem' }}>
-          Year 0 starts with {initialRate}%
+          Initial rate: {initialRate}% (applied until fixed period ends or LTV threshold reached)
         </p>
         {sortedRateChanges.length > 0 ? (
           <div style={{
@@ -130,12 +155,12 @@ function InterestRateManager({ initialRate, mortgageTerm, onRateChangesUpdate })
               letterSpacing: '0.05em',
               marginBottom: '0.75rem'
             }}>
-              Configured Rate Changes:
+              Configured LTV-Based Rates:
             </div>
-            {sortedRateChanges.map(([year, rate]) => (
-              <div key={year} className="rate-change-item" style={{ marginBottom: '0.5rem' }}>
+            {sortedRateChanges.map(([ltv, rate]) => (
+              <div key={ltv} className="rate-change-item" style={{ marginBottom: '0.5rem' }}>
                 <div style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>
-                  Year {year}
+                  {ltv}% LTV
                 </div>
                 <div style={{
                   color: 'var(--accent-primary)',
@@ -147,7 +172,7 @@ function InterestRateManager({ initialRate, mortgageTerm, onRateChangesUpdate })
                 <button
                   type="button"
                   className="button-icon button-remove"
-                  onClick={() => removeRateChange(year)}
+                  onClick={() => removeRateChange(ltv)}
                   title="Remove"
                 >
                   ×
@@ -163,7 +188,7 @@ function InterestRateManager({ initialRate, mortgageTerm, onRateChangesUpdate })
             textAlign: 'center',
             padding: '1rem'
           }}>
-            No rate changes configured. The initial rate of {initialRate}% will be used for the entire mortgage term.
+            No LTV-based rate changes configured. The initial rate of {initialRate}% will be used for the entire mortgage term.
           </p>
         )}
       </div>

@@ -335,20 +335,6 @@ function ResultsDisplay({ results, loading, error }) {
           </div>
         )}
       </div>
-
-      <div className="info-box" style={{ marginTop: '2rem' }}>
-        <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
-          Key info on overpaying:
-        </h4>
-        <ol style={{ paddingLeft: '1.5rem', lineHeight: '1.8' }}>
-          <li>
-            Find the right way to overpay. If you get it wrong, you may not get the benefit.
-          </li>
-          <li>
-            If you're free to switch mortgage, make sure you're on the cheapest deal.
-          </li>
-        </ol>
-      </div>
     </div>
   )
 }

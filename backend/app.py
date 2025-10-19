@@ -24,11 +24,11 @@ def calculate() -> Dict[str, Any]:
         app.logger.info(f"Received calculation request")
         app.logger.info(f"Interest rate changes: {data.get('interest_rate_changes', {})}")
 
-        # Convert interest_rate_changes keys from strings to integers
+        # Convert interest_rate_changes keys from strings to floats (LTV percentages)
         rate_changes = data.get("interest_rate_changes", {})
         if rate_changes:
-            rate_changes = {int(k): float(v) for k, v in rate_changes.items()}
-            app.logger.info(f"Converted rate changes: {rate_changes}")
+            rate_changes = {float(k): float(v) for k, v in rate_changes.items()}
+            app.logger.info(f"Converted LTV-based rate changes: {rate_changes}")
 
         # Handle optional monthly payment
         monthly_payment = data.get("monthly_payment")
@@ -46,7 +46,9 @@ def calculate() -> Dict[str, Any]:
             one_off_overpayment=float(data.get("one_off_overpayment", 0)),
             recurring_overpayment=float(data.get("recurring_overpayment", 0)),
             recurring_frequency=data.get("recurring_frequency", "monthly"),
-            interest_rate_changes=rate_changes
+            interest_rate_changes=rate_changes,
+            property_value=float(data.get("property_value", 0)),
+            product_type=int(data.get("product_type", 5))
         )
 
         result = calculate_mortgage(params)
