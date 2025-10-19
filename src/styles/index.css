@@ -45,6 +45,9 @@ body {
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 .app {
@@ -151,7 +154,7 @@ body {
   border: 1px solid var(--border-medium);
   border-radius: 0.5rem;
   color: var(--text-primary);
-  font-size: 0.9375rem;
+  font-size: 1rem;
   font-family: inherit;
   transition: all 0.2s ease;
 }
@@ -266,7 +269,7 @@ body {
   border: 1px solid var(--border-medium);
   border-radius: 0.5rem;
   color: var(--text-primary);
-  font-size: 0.9375rem;
+  font-size: 1rem;
   font-family: inherit;
   cursor: pointer;
   appearance: none;
@@ -544,5 +547,46 @@ body {
 
   .rate-change-item .form-group {
     margin-bottom: 0.5rem;
+  }
+
+  /* Reduce padding on mobile for better space utilization */
+  .app {
+    padding: 1rem 0.75rem;
+  }
+
+  .card {
+    padding: 1.25rem;
+  }
+
+  .header h1 {
+    font-size: 1.75rem;
+  }
+
+  .header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+  }
+
+  /* Ensure inputs don't cause zoom on iOS */
+  .form-input,
+  .form-select {
+    font-size: 16px;
+  }
+
+  /* Adjust result values for mobile */
+  .result-value {
+    font-size: 1.25rem;
+  }
+
+  /* Better spacing for calculator grid */
+  .calculator-grid {
+    gap: 1rem;
+  }
+
+  /* Improve chart container on mobile */
+  .chart-container {
+    padding: 0.75rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }
