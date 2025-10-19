@@ -260,19 +260,23 @@ function ResultsDisplay({ results, loading, error }) {
 
                     const maxYear = Math.max(...chartData.map(d => d.year))
 
+                    // Track previous year's LTV to detect crossings
+                    let previousLTV = null
+
                     for (let year = 0; year <= maxYear; year++) {
                       const yearData = chartData.find(d => d.year === year)
                       if (yearData && yearData.withOverpayment > 0) {
                         const ltv = ((yearData.withOverpayment / propertyValue) * 100).toFixed(1)
                         const ltvNum = parseFloat(ltv)
 
-                        // Find the first threshold we're below (just crossed under)
-                        const crossedThreshold = importantLTVs.find(threshold => ltvNum < threshold)
-
-                        // Only highlight if we're within 1% below the threshold
-                        const milestone = crossedThreshold && (crossedThreshold - ltvNum) <= 1
-                          ? crossedThreshold
-                          : undefined
+                        // Check if we just crossed below any threshold
+                        let milestone = undefined
+                        if (previousLTV !== null) {
+                          // Find if we crossed any threshold between previous year and this year
+                          milestone = importantLTVs.find(threshold =>
+                            previousLTV >= threshold && ltvNum < threshold
+                          )
+                        }
 
                         yearlyData.push({
                           year,
@@ -280,6 +284,8 @@ function ResultsDisplay({ results, loading, error }) {
                           ltv: ltvNum,
                           milestone
                         })
+
+                        previousLTV = ltvNum
                       }
                     }
 
