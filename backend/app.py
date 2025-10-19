@@ -30,20 +30,18 @@ def calculate() -> Dict[str, Any]:
             rate_changes = {float(k): float(v) for k, v in rate_changes.items()}
             app.logger.info(f"Converted LTV-based rate changes: {rate_changes}")
 
-        # Handle optional monthly payment
-        monthly_payment = data.get("monthly_payment")
-        if monthly_payment is not None and monthly_payment != "":
-            monthly_payment = float(monthly_payment)
-        else:
-            monthly_payment = None
+        # Convert one_off_overpayments keys from strings to integers (years)
+        one_off_overpayments = data.get("one_off_overpayments", {})
+        if one_off_overpayments:
+            one_off_overpayments = {int(k): float(v) for k, v in one_off_overpayments.items()}
+            app.logger.info(f"One-off overpayments: {one_off_overpayments}")
 
         params = MortgageParams(
             mortgage_debt=float(data["mortgage_debt"]),
             mortgage_term=int(data["mortgage_term"]),
             interest_rate=float(data["interest_rate"]),
             mortgage_type=data.get("mortgage_type", "repayment"),
-            monthly_payment=monthly_payment,
-            one_off_overpayment=float(data.get("one_off_overpayment", 0)),
+            one_off_overpayments=one_off_overpayments,
             recurring_overpayment=float(data.get("recurring_overpayment", 0)),
             recurring_frequency=data.get("recurring_frequency", "monthly"),
             interest_rate_changes=rate_changes,

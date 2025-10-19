@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react'
 import InterestRateManager from './InterestRateManager'
+import OneOffOverpaymentManager from './OneOffOverpaymentManager'
 
 function CalculatorForm({ onCalculate, loading }) {
   const [formData, setFormData] = useState({
@@ -10,8 +11,7 @@ function CalculatorForm({ onCalculate, loading }) {
     interest_rate: 4.81,
     product_type: 5,
     mortgage_type: 'repayment',
-    monthly_payment: '',
-    one_off_overpayment: 0,
+    one_off_overpayments: {},
     recurring_overpayment: 300,
     recurring_frequency: 'monthly',
     interest_rate_changes: {}
@@ -89,6 +89,13 @@ function CalculatorForm({ onCalculate, loading }) {
     }))
   }, [])
 
+  const handleOneOffOverpayments = useCallback((overpayments) => {
+    setFormData(prev => ({
+      ...prev,
+      one_off_overpayments: overpayments
+    }))
+  }, [])
+
   const handleSubmit = (e) => {
     e.preventDefault()
 
@@ -105,9 +112,12 @@ function CalculatorForm({ onCalculate, loading }) {
 
   return (
     <div className="card">
-      <h2 className="card-title">Mortgage Details</h2>
+      <h2 className="card-title">Mortgage Calculator</h2>
 
       <form onSubmit={handleSubmit}>
+        {/* MORTGAGE DETAILS SECTION */}
+        <div className="form-section">
+          <h3 className="section-title">Mortgage Details</h3>
         <div className="form-group">
           <label className="form-label">Property Value</label>
           <div className="input-group">
@@ -249,47 +259,16 @@ function CalculatorForm({ onCalculate, loading }) {
           </div>
           <p className="note">Your rate will change after this period</p>
         </div>
-
-        <div className="form-group">
-          <label className="form-label">Monthly Payment (Optional)</label>
-          <div className="input-group">
-            <span className="input-prefix">£</span>
-            <input
-              type="number"
-              name="monthly_payment"
-              value={formData.monthly_payment}
-              onChange={handleChange}
-              className="form-input"
-              min="0"
-              step="0.01"
-              placeholder="Auto-calculated"
-            />
-          </div>
         </div>
 
-        <div className="info-box">
-          <p>
-            <strong>Note:</strong> Typically you're only allowed to overpay by 10%
-            of your outstanding mortgage balance per year, so bear this in mind
-            particularly if you wish to make recurring overpayments more than once a year.
-          </p>
-        </div>
+        {/* OVERPAYMENTS SECTION */}
+        <div className="form-section">
+          <h3 className="section-title">Overpayments</h3>
 
-        <div className="form-group">
-          <label className="form-label">One-off Overpayment</label>
-          <div className="input-group">
-            <span className="input-prefix">£</span>
-            <input
-              type="number"
-              name="one_off_overpayment"
-              value={formData.one_off_overpayment}
-              onChange={handleChange}
-              className="form-input"
-              min="0"
-              step="100"
-            />
-          </div>
-        </div>
+        <OneOffOverpaymentManager
+          mortgageTerm={formData.mortgage_term}
+          onOverpaymentsUpdate={handleOneOffOverpayments}
+        />
 
         <div className="form-group">
           <label className="form-label">Recurring Overpayment</label>
@@ -321,12 +300,18 @@ function CalculatorForm({ onCalculate, loading }) {
             </select>
           </div>
         </div>
+        </div>
+
+        {/* LTV-BASED RATE CHANGES SECTION */}
+        <div className="form-section">
+          <h3 className="section-title">LTV-Based Rate Changes</h3>
 
         <InterestRateManager
           initialRate={formData.interest_rate}
           mortgageTerm={formData.mortgage_term}
           onRateChangesUpdate={handleRateChanges}
         />
+        </div>
 
         <button
           type="submit"

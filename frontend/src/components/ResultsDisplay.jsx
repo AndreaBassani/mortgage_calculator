@@ -145,13 +145,7 @@ function ResultsDisplay({ results, loading, error }) {
         </h3>
         <ResponsiveContainer width="100%" height={400}>
           <LineChart data={chartData}>
-            <defs>
-              <linearGradient id="colorWithOverpayment" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#00ffcc" stopOpacity={0.3}/>
-                <stop offset="95%" stopColor="#00ffcc" stopOpacity={0}/>
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#f0d9cc" opacity={0.6} />
             <XAxis
               dataKey="year"
               stroke="var(--text-secondary)"
@@ -166,7 +160,7 @@ function ResultsDisplay({ results, loading, error }) {
             <Tooltip
               contentStyle={{
                 backgroundColor: 'var(--bg-secondary)',
-                border: '1px solid var(--border-color)',
+                border: '1px solid var(--border-medium)',
                 borderRadius: '0.5rem',
                 color: 'var(--text-primary)'
               }}
@@ -186,17 +180,18 @@ function ResultsDisplay({ results, loading, error }) {
             <Line
               type="monotone"
               dataKey="withoutOverpayment"
-              stroke="#ff006e"
+              stroke="#b09a96"
               strokeWidth={2}
               dot={false}
               name="Without Overpayments"
+              strokeDasharray="5 5"
             />
 
             {/* With Overpayments Line */}
             <Line
               type="monotone"
               dataKey="withOverpayment"
-              stroke="#00ffcc"
+              stroke="#d4a59a"
               strokeWidth={3}
               dot={false}
               name="With Overpayments"
@@ -226,21 +221,13 @@ function ResultsDisplay({ results, loading, error }) {
             </div>
 
             <div style={{ overflowX: 'auto' }}>
-              <table style={{
-                width: '100%',
-                borderCollapse: 'collapse',
-                fontSize: '0.9rem'
-              }}>
+              <table className="ltv-table">
                 <thead>
-                  <tr style={{
-                    borderBottom: '2px solid var(--border-color)',
-                    color: 'var(--text-secondary)',
-                    textAlign: 'left'
-                  }}>
-                    <th style={{ padding: '0.75rem 0.5rem' }}>Year</th>
-                    <th style={{ padding: '0.75rem 0.5rem' }}>Capital (With Overpayment)</th>
-                    <th style={{ padding: '0.75rem 0.5rem' }}>LTV</th>
-                    <th style={{ padding: '0.75rem 0.5rem' }}>Milestone</th>
+                  <tr>
+                    <th>Year</th>
+                    <th>Capital (With Overpayment)</th>
+                    <th>LTV</th>
+                    <th>Milestone</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -294,36 +281,17 @@ function ResultsDisplay({ results, loading, error }) {
                       return (
                         <tr
                           key={data.year}
-                          style={{
-                            borderBottom: '1px solid var(--border-color)',
-                            backgroundColor: isImportant ? 'rgba(0, 255, 204, 0.1)' : 'transparent',
-                            color: isImportant ? 'var(--accent-primary)' : 'var(--text-primary)'
-                          }}
+                          className={isImportant ? 'highlight' : ''}
                         >
-                          <td style={{
-                            padding: '0.75rem 0.5rem',
-                            fontWeight: isImportant ? 600 : 400
-                          }}>
-                            {data.year}
-                          </td>
-                          <td style={{
-                            padding: '0.75rem 0.5rem',
-                            fontWeight: isImportant ? 600 : 400
-                          }}>
-                            {formatCurrency(data.capital)}
-                          </td>
-                          <td style={{
-                            padding: '0.75rem 0.5rem',
-                            fontWeight: isImportant ? 700 : 400
-                          }}>
-                            {data.ltv}%
-                          </td>
-                          <td style={{
-                            padding: '0.75rem 0.5rem',
-                            fontWeight: 700,
-                            color: isImportant ? 'var(--accent-primary)' : 'var(--text-muted)'
-                          }}>
-                            {isImportant ? `${data.milestone}% LTV Milestone` : '-'}
+                          <td>{data.year}</td>
+                          <td>{formatCurrency(data.capital)}</td>
+                          <td>{data.ltv}%</td>
+                          <td>
+                            {isImportant ? (
+                              <span className="milestone-badge">{data.milestone}% LTV</span>
+                            ) : (
+                              <span style={{ color: 'var(--text-muted)' }}>-</span>
+                            )}
                           </td>
                         </tr>
                       )

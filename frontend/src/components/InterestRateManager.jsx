@@ -46,13 +46,10 @@ function InterestRateManager({ initialRate, mortgageTerm, onRateChangesUpdate })
     .sort(([a], [b]) => parseInt(a) - parseInt(b))
 
   return (
-    <div className="rate-changes-section">
+    <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <label className="form-label" style={{ marginBottom: 0 }}>
-              LTV-Based Rate Changes
-            </label>
             <button
               type="button"
               style={{

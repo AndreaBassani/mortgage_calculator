@@ -12,8 +12,7 @@ class MortgageParams:
     mortgage_term: int
     interest_rate: float
     mortgage_type: str = "repayment"
-    monthly_payment: Optional[float] = None
-    one_off_overpayment: float = 0.0
+    one_off_overpayments: Dict[int, float] = None
     recurring_overpayment: float = 0.0
     recurring_frequency: str = "monthly"
     interest_rate_changes: Dict[int, float] = None
@@ -24,6 +23,8 @@ class MortgageParams:
         """Initialize default values."""
         if self.interest_rate_changes is None:
             self.interest_rate_changes = {}
+        if self.one_off_overpayments is None:
+            self.one_off_overpayments = {}
 
 
 def calculate_monthly_payment(
@@ -141,12 +142,9 @@ def calculate_mortgage(params: MortgageParams) -> Dict[str, Any]:
     total_months = params.mortgage_term * 12
     current_rate = params.interest_rate
 
-    if params.monthly_payment:
-        base_payment = params.monthly_payment
-    else:
-        base_payment = calculate_monthly_payment(
-            balance, current_rate, total_months
-        )
+    base_payment = calculate_monthly_payment(
+        balance, current_rate, total_months
+    )
 
     # Calculate baseline schedule without overpayments
     baseline_schedule = calculate_baseline_schedule(
@@ -162,8 +160,6 @@ def calculate_mortgage(params: MortgageParams) -> Dict[str, Any]:
     total_principal_paid = 0.0
     month = 0
     current_year = 0
-
-    one_off_applied = False
 
     # Track the best LTV-based rate achieved
     best_ltv_rate = None
@@ -208,9 +204,9 @@ def calculate_mortgage(params: MortgageParams) -> Dict[str, Any]:
 
         overpayment = 0.0
 
-        if not one_off_applied and params.one_off_overpayment > 0:
-            overpayment += params.one_off_overpayment
-            one_off_applied = True
+        # Check if there's a one-off overpayment scheduled for this year (apply in first month of year)
+        if year in params.one_off_overpayments and month % 12 == 0:
+            overpayment += params.one_off_overpayments[year]
 
         if params.recurring_overpayment > 0:
             if params.recurring_frequency == "monthly":
@@ -257,7 +253,8 @@ def calculate_mortgage(params: MortgageParams) -> Dict[str, Any]:
         "schedule": schedule,
         "baseline_schedule": baseline_schedule,
         "overpayment_summary": {
-            "one_off": params.one_off_overpayment if one_off_applied else 0,
+            "one_off_total": sum(params.one_off_overpayments.values()),
+            "one_off_by_year": params.one_off_overpayments,
             "recurring_total": (
                 params.recurring_overpayment
                 * (month if params.recurring_frequency == "monthly" else month // 12)
