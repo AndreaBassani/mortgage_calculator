@@ -2,20 +2,239 @@ import { useState, useRef, useCallback } from 'react'
 import InterestRateManager from './InterestRateManager'
 import OneOffOverpaymentManager from './OneOffOverpaymentManager'
 
+function InfoButton({ message, title }) {
+  const [showModal, setShowModal] = useState(false)
+
+  const handleClick = () => {
+    setShowModal(true)
+  }
+
+  const handleClose = () => {
+    setShowModal(false)
+  }
+
+  const parseMessage = (msg) => {
+    const lines = msg.split('\\n')
+    const elements = []
+    let currentSection = []
+    let sectionTitle = null
+
+    lines.forEach((line) => {
+      const trimmedLine = line.trim()
+
+      if (!trimmedLine) {
+        if (currentSection.length > 0) {
+          elements.push({ type: 'section', title: sectionTitle, content: currentSection })
+          currentSection = []
+          sectionTitle = null
+        }
+        return
+      }
+
+      if (trimmedLine.endsWith(':') && !trimmedLine.startsWith('•') && !trimmedLine.startsWith('-')) {
+        if (currentSection.length > 0) {
+          elements.push({ type: 'section', title: sectionTitle, content: currentSection })
+          currentSection = []
+        }
+        sectionTitle = trimmedLine.slice(0, -1)
+      } else if (trimmedLine.startsWith('•') || trimmedLine.startsWith('-')) {
+        currentSection.push({ type: 'bullet', text: trimmedLine.replace(/^[•-]\s*/, '') })
+      } else {
+        currentSection.push({ type: 'text', text: trimmedLine })
+      }
+    })
+
+    if (currentSection.length > 0) {
+      elements.push({ type: 'section', title: sectionTitle, content: currentSection })
+    }
+
+    return elements
+  }
+
+  const sections = parseMessage(message)
+
+  return (
+    <>
+      <button
+        type="button"
+        style={{
+          background: 'none',
+          border: '2px solid var(--accent-primary)',
+          color: 'var(--accent-primary)',
+          cursor: 'pointer',
+          fontSize: '0.875rem',
+          fontWeight: '600',
+          padding: '0',
+          width: '18px',
+          height: '18px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderRadius: '50%',
+          marginLeft: '0.5rem',
+          transition: 'all 0.2s ease'
+        }}
+        onClick={handleClick}
+        title={title}
+        onMouseEnter={(e) => {
+          e.target.style.background = 'var(--accent-primary)'
+          e.target.style.color = 'white'
+        }}
+        onMouseLeave={(e) => {
+          e.target.style.background = 'none'
+          e.target.style.color = 'var(--accent-primary)'
+        }}
+      >
+        ?
+      </button>
+      {showModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(51, 39, 42, 0.6)',
+            backdropFilter: 'blur(2px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '1rem',
+            animation: 'fadeIn 0.2s ease'
+          }}
+          onClick={handleClose}
+        >
+          <div
+            style={{
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--border-light)',
+              borderRadius: '1rem',
+              padding: '2.5rem 2.5rem 2rem 2.5rem',
+              maxWidth: '560px',
+              maxHeight: '85vh',
+              overflow: 'auto',
+              boxShadow: '0 20px 25px -5px rgba(51, 39, 42, 0.1), 0 10px 10px -5px rgba(51, 39, 42, 0.04)',
+              position: 'relative',
+              animation: 'slideIn 0.3s ease'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              style={{
+                position: 'absolute',
+                top: '1.25rem',
+                right: '1.25rem',
+                background: 'none',
+                border: 'none',
+                fontSize: '1.75rem',
+                color: 'var(--text-muted)',
+                cursor: 'pointer',
+                width: '28px',
+                height: '28px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '0.375rem',
+                transition: 'all 0.2s ease',
+                lineHeight: '1'
+              }}
+              onClick={handleClose}
+              onMouseEnter={(e) => {
+                e.target.style.background = 'var(--bg-hover)'
+                e.target.style.color = 'var(--text-primary)'
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'none'
+                e.target.style.color = 'var(--text-muted)'
+              }}
+            >
+              ×
+            </button>
+            <div style={{ paddingRight: '1.5rem' }}>
+              {sections.map((section, sIndex) => (
+                <div key={sIndex} style={{ marginBottom: sIndex < sections.length - 1 ? '1.5rem' : '0' }}>
+                  {section.title && (
+                    <h3 style={{
+                      fontSize: '1.125rem',
+                      fontWeight: '600',
+                      color: 'var(--text-primary)',
+                      marginBottom: '0.875rem',
+                      lineHeight: '1.4'
+                    }}>
+                      {section.title}
+                    </h3>
+                  )}
+                  {section.content.map((item, iIndex) => {
+                    if (item.type === 'bullet') {
+                      return (
+                        <div key={iIndex} style={{
+                          display: 'flex',
+                          marginBottom: '0.625rem',
+                          lineHeight: '1.6'
+                        }}>
+                          <span style={{
+                            color: 'var(--accent-primary)',
+                            marginRight: '0.625rem',
+                            fontWeight: '600',
+                            fontSize: '1.1em',
+                            flexShrink: 0
+                          }}>•</span>
+                          <span style={{
+                            color: 'var(--text-primary)',
+                            fontSize: '0.9375rem'
+                          }}>{item.text}</span>
+                        </div>
+                      )
+                    } else {
+                      return (
+                        <p key={iIndex} style={{
+                          color: 'var(--text-secondary)',
+                          fontSize: '0.9375rem',
+                          lineHeight: '1.65',
+                          marginBottom: iIndex < section.content.length - 1 ? '0.75rem' : '0'
+                        }}>
+                          {item.text}
+                        </p>
+                      )
+                    }
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
 function CalculatorForm({ onCalculate, loading }) {
   const [formData, setFormData] = useState({
-    property_value: 400000,
-    mortgage_debt: 351000,
+    property_value: '',
+    mortgage_debt: '',
     ltv: '',
-    mortgage_term: 40,
-    interest_rate: 4.81,
-    product_type: 5,
+    mortgage_term: '',
+    interest_rate: '',
+    product_type: '',
     mortgage_type: 'repayment',
     one_off_overpayments: {},
-    recurring_overpayment: 300,
+    recurring_overpayment: '',
     recurring_frequency: 'monthly',
     interest_rate_changes: {}
   })
+
+  // Format number with commas for display
+  const formatNumberWithCommas = (value) => {
+    if (!value) return ''
+    return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  }
+
+  // Remove commas from formatted number
+  const removeCommas = (value) => {
+    return value.replace(/,/g, '')
+  }
 
   const calculateLTV = () => {
     if (formData.property_value > 0 && formData.mortgage_debt > 0) {
@@ -42,10 +261,11 @@ function CalculatorForm({ onCalculate, loading }) {
   }
 
   const handleMortgageDebtChange = (e) => {
-    const debt = parseFloat(e.target.value)
+    const rawValue = removeCommas(e.target.value)
+    const debt = parseFloat(rawValue)
     setFormData(prev => ({
       ...prev,
-      mortgage_debt: e.target.value,
+      mortgage_debt: rawValue,
       ltv: debt && prev.property_value > 0
         ? ((debt / prev.property_value) * 100).toFixed(1)
         : ''
@@ -53,11 +273,12 @@ function CalculatorForm({ onCalculate, loading }) {
   }
 
   const handlePropertyValueChange = (e) => {
-    const value = parseFloat(e.target.value)
+    const rawValue = removeCommas(e.target.value)
+    const value = parseFloat(rawValue)
     setFormData(prev => {
       const newFormData = {
         ...prev,
-        property_value: e.target.value
+        property_value: rawValue
       }
 
       if (prev.ltv && value > 0) {
@@ -120,21 +341,20 @@ function CalculatorForm({ onCalculate, loading }) {
           <div className="input-group">
             <span className="input-prefix">£</span>
             <input
-              type="number"
+              type="text"
               name="property_value"
-              value={formData.property_value}
+              value={formatNumberWithCommas(formData.property_value)}
               onChange={handlePropertyValueChange}
               className="form-input"
               required
-              min="0"
-              step="1"
+              placeholder="e.g. 400,000"
             />
           </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           <div className="form-group">
-            <label className="form-label">LTV (%)</label>
+            <label className="form-label">LTV <span style={{ fontWeight: 'normal', fontStyle: 'italic', color: 'var(--text-muted)', fontSize: '0.9rem' }}>(Optional)</span></label>
             <div className="input-group">
               <input
                 type="number"
@@ -145,7 +365,7 @@ function CalculatorForm({ onCalculate, loading }) {
                 min="0"
                 max="100"
                 step="0.1"
-                placeholder="Optional"
+                placeholder="e.g. 90"
               />
               <span className="input-suffix">%</span>
             </div>
@@ -157,14 +377,13 @@ function CalculatorForm({ onCalculate, loading }) {
             <div className="input-group">
               <span className="input-prefix">£</span>
               <input
-                type="number"
+                type="text"
                 name="mortgage_debt"
-                value={formData.mortgage_debt}
+                value={formatNumberWithCommas(formData.mortgage_debt)}
                 onChange={handleMortgageDebtChange}
                 className="form-input"
                 required
-                min="0"
-                step="1"
+                placeholder="e.g. 351,000"
               />
             </div>
             <p className="note">Or enter debt to calculate LTV</p>
@@ -183,6 +402,7 @@ function CalculatorForm({ onCalculate, loading }) {
               required
               min="1"
               max="40"
+              placeholder="e.g. 25"
             />
             <span className="input-suffix">years</span>
           </div>
@@ -234,6 +454,7 @@ function CalculatorForm({ onCalculate, loading }) {
               min="0"
               max="20"
               step="0.01"
+              placeholder="e.g. 4.81"
             />
             <span className="input-suffix">%</span>
           </div>
@@ -247,7 +468,9 @@ function CalculatorForm({ onCalculate, loading }) {
               value={formData.product_type}
               onChange={handleChange}
               className="form-select"
+              required
             >
+              <option value="">Select period...</option>
               <option value="2">2 Years Fixed</option>
               <option value="3">3 Years Fixed</option>
               <option value="5">5 Years Fixed</option>
@@ -262,29 +485,10 @@ function CalculatorForm({ onCalculate, loading }) {
       <div className="card">
         <h2 className="card-title">
           Overpayments
-          <button
-            type="button"
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--accent-primary)',
-              cursor: 'pointer',
-              fontSize: '0.875rem',
-              padding: '0',
-              width: '18px',
-              height: '18px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: '50%',
-              border: '2px solid var(--accent-primary)',
-              marginLeft: '0.5rem'
-            }}
-            onClick={() => alert('How Overpayment Timing Works:\n\nOne-off overpayments are applied at the END of the selected year, after all 12 monthly payments for that year have been made.\n\n• Year 0: Overpayment applied after month 12 (end of first year)\n• Year 1: Overpayment applied after month 24 (end of second year)\n• The table on the right shows your mortgage balance at the BEGINNING of each year\n\nExample: A £10,000 overpayment in Year 0 will be applied after month 12. You\'ll see the reduced balance at the start of Year 1 in the results table.')}
+          <InfoButton
+            message="How Overpayment Timing Works:\n\nOne-off overpayments are applied at the END of the selected year, after all 12 monthly payments for that year have been made.\n\n• Year 0: Overpayment applied after month 12 (end of first year)\n• Year 1: Overpayment applied after month 24 (end of second year)\n• The table on the right shows your mortgage balance at the BEGINNING of each year\n\nExample: A £10,000 overpayment in Year 0 will be applied after month 12. You'll see the reduced balance at the start of Year 1 in the results table."
             title="Learn how overpayment timing works"
-          >
-            ?
-          </button>
+          />
         </h2>
 
         <OneOffOverpaymentManager
@@ -293,17 +497,19 @@ function CalculatorForm({ onCalculate, loading }) {
         />
 
         <div className="form-group">
-          <label className="form-label">Recurring Overpayment</label>
+          <label className="form-label">Recurring Overpayment <span style={{ fontWeight: 'normal', fontStyle: 'italic', color: 'var(--text-muted)', fontSize: '0.9rem' }}>(Optional)</span></label>
           <div className="input-group">
             <span className="input-prefix">£</span>
             <input
-              type="number"
+              type="text"
               name="recurring_overpayment"
-              value={formData.recurring_overpayment}
-              onChange={handleChange}
+              value={formatNumberWithCommas(formData.recurring_overpayment)}
+              onChange={(e) => {
+                const rawValue = removeCommas(e.target.value)
+                handleChange({ target: { name: 'recurring_overpayment', value: rawValue } })
+              }}
               className="form-input"
-              min="0"
-              step="10"
+              placeholder="e.g. 300"
             />
           </div>
         </div>
@@ -328,29 +534,10 @@ function CalculatorForm({ onCalculate, loading }) {
       <div className="card">
         <h2 className="card-title">
           LTV-Based Rate Changes
-          <button
-            type="button"
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--accent-primary)',
-              cursor: 'pointer',
-              fontSize: '0.875rem',
-              padding: '0',
-              width: '18px',
-              height: '18px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: '50%',
-              border: '2px solid var(--accent-primary)',
-              marginLeft: '0.5rem'
-            }}
-            onClick={() => alert('LTV-Based Rate Changes:\n\nSet new interest rates that apply when your LTV drops to specific levels.\n\nHow it works:\n1. LTV is checked at the start of each year (beginning of year)\n2. When your LTV reaches or drops below a threshold (e.g., 85%), it\'s marked as reached\n3. Rate application depends on when the threshold is reached:\n   • If reached at a fixed-rate period start (Year 0, 2, 4, etc.): New rate applies IMMEDIATELY\n   • If reached mid-period (Year 1, 3, 5, etc.): New rate applies at the NEXT period start\n\nExample with 2-year fixed rate:\n- Initial: 4.81% rate, 2-year fix\n- You set: 85% LTV → 4.5%\n\nScenario A (Reached at period start):\n- LTV drops to 84% at start of Year 2\n- Year 2+: 4.5% rate applies immediately\n\nScenario B (Reached mid-period):\n- LTV drops to 84% at start of Year 3\n- Year 3: Still 4.81% (mid-period)\n- Year 4+: 4.5% rate applies (next period start)')}
+          <InfoButton
+            message="LTV-Based Rate Changes:\n\nSet new interest rates that apply when your LTV drops to specific levels.\n\nHow it works:\n1. LTV is checked at the start of each year (beginning of year)\n2. When your LTV reaches or drops below a threshold (e.g., 85%), it's marked as reached\n3. Rate application depends on when the threshold is reached:\n   • If reached at a fixed-rate period start (Year 0, 2, 4, etc.): New rate applies IMMEDIATELY\n   • If reached mid-period (Year 1, 3, 5, etc.): New rate applies at the NEXT period start\n\nExample with 2-year fixed rate:\n- Initial: 4.81% rate, 2-year fix\n- You set: 85% LTV → 4.5%\n\nScenario A (Reached at period start):\n- LTV drops to 84% at start of Year 2\n- Year 2+: 4.5% rate applies immediately\n\nScenario B (Reached mid-period):\n- LTV drops to 84% at start of Year 3\n- Year 3: Still 4.81% (mid-period)\n- Year 4+: 4.5% rate applies (next period start)"
             title="Learn how LTV-based rate changes work"
-          >
-            ?
-          </button>
+          />
         </h2>
 
         <InterestRateManager

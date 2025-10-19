@@ -6,12 +6,24 @@ function OneOffOverpaymentManager({ mortgageTerm, onOverpaymentsUpdate }) {
   const [amountInput, setAmountInput] = useState('')
   const [yearInput, setYearInput] = useState('')
 
+  // Format number with commas for display
+  const formatNumberWithCommas = (value) => {
+    if (!value) return ''
+    return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  }
+
+  // Remove commas from formatted number
+  const removeCommas = (value) => {
+    return value.replace(/,/g, '')
+  }
+
   useEffect(() => {
     onOverpaymentsUpdate(overpayments)
   }, [overpayments])
 
   const handleAddClick = () => {
-    const amount = parseFloat(amountInput)
+    const cleanAmount = removeCommas(amountInput)
+    const amount = parseFloat(cleanAmount)
     const year = parseInt(yearInput)
 
     if (amount && !isNaN(amount) && !isNaN(year) && amount > 0 && year >= 0) {
@@ -82,13 +94,11 @@ function OneOffOverpaymentManager({ mortgageTerm, onOverpaymentsUpdate }) {
               <div className="input-group">
                 <span className="input-prefix">£</span>
                 <input
-                  type="number"
-                  placeholder="Amount"
+                  type="text"
+                  placeholder="e.g. 5,000"
                   className="form-input"
-                  min="0"
-                  step="100"
-                  value={amountInput}
-                  onChange={(e) => setAmountInput(e.target.value)}
+                  value={formatNumberWithCommas(amountInput)}
+                  onChange={(e) => setAmountInput(removeCommas(e.target.value))}
                 />
               </div>
             </div>
