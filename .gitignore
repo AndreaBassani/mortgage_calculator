@@ -22,6 +22,11 @@ yarn-error.log*
 # Frontend build
 frontend/dist/
 frontend/.vite/
+dist/
+.vite/
+
+# Vercel
+.vercel
 
 # IDEs
 .vscode/

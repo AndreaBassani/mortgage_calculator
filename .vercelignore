@@ -1,0 +1,14 @@
+# Don't deploy these to Vercel
+backend/
+frontend/
+node_modules/
+.git/
+*.md
+!README.md
+!DEPLOYMENT.md
+.env.local
+.env.*.local
+*.log
+.vscode/
+.idea/
+test-*.js

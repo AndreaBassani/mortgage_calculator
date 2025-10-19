@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(chmod +x start.sh)",
-      "Bash(pip install -r requirements.txt)"
+      "Bash(pip install -r requirements.txt)",
+      "Bash(npm install)",
+      "Bash(node api/test-calculator.js)"
     ],
     "deny": [],
     "ask": []
