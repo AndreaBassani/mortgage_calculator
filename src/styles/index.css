@@ -524,3 +524,25 @@ body {
   font-size: 0.75rem;
   font-weight: 600;
 }
+
+/* Form Row - Two Column Layout */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+/* Mobile Responsive - Stack two-column forms */
+@media (max-width: 640px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .rate-change-item {
+    grid-template-columns: 1fr;
+  }
+
+  .rate-change-item .form-group {
+    margin-bottom: 0.5rem;
+  }
+}

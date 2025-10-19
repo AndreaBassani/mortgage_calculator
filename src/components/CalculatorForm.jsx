@@ -352,7 +352,7 @@ function CalculatorForm({ onCalculate, loading }) {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+        <div className="form-row">
           <div className="form-group">
             <label className="form-label">LTV <span style={{ fontWeight: 'normal', fontStyle: 'italic', color: 'var(--text-muted)', fontSize: '0.9rem' }}>(Optional)</span></label>
             <div className="input-group">
