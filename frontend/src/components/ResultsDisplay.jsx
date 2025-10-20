@@ -186,16 +186,17 @@ function ResultsDisplay({ results, loading, error }) {
             <CartesianGrid strokeDasharray="3 3" stroke="#f0d9cc" opacity={0.6} />
             <XAxis
               dataKey="year"
+              type="number"
+              domain={[0, 'dataMax']}
               stroke="var(--text-secondary)"
               tick={{ fill: 'var(--text-secondary)' }}
               label={{ value: 'Years', position: 'insideBottom', offset: -10, fill: 'var(--text-secondary)' }}
-              ticks={(() => {
+              tickCount={(() => {
                 const maxYear = Math.max(...chartData.map(d => d.year))
-                const ticks = []
-                for (let i = 0; i <= maxYear; i += productType) {
-                  ticks.push(i)
-                }
-                return ticks
+                // Generate ticks at reasonable intervals
+                if (maxYear <= 10) return maxYear + 1
+                if (maxYear <= 20) return Math.floor(maxYear / 2) + 1
+                return Math.floor(maxYear / 5) + 1
               })()}
             />
             <YAxis

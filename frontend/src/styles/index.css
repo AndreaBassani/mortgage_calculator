@@ -191,11 +191,13 @@ body {
 .input-prefix {
   border-right: none;
   border-radius: 0.5rem 0 0 0.5rem;
+  margin-right: -1px;
 }
 
 .input-suffix {
-  border-left: none;
+  border-left: 1px solid var(--border-medium);
   border-radius: 0 0.5rem 0.5rem 0;
+  margin-left: -1px;
 }
 
 .input-group .form-input {
